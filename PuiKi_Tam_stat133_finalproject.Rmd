@@ -82,10 +82,12 @@ labels <- c("Carrier Delay", "Weather Delay", "NAS Delay", "Security Delay", "La
 
 piepercent <- round(100*pie_number/length(table4$DEP_DELAY), 1)
 
+labels2 <- paste(labels, piepercent)
+labels2 <- paste(labels2, "%", sep="")
+
 png(file= "DelayPie.jpg")
 
-pie(pie_number, labels= piepercent, main = "Delay Causes in Jan2017", col = rainbow(length(pie_number)))
-legend("topright", labels, cex = 0.78, fill = rainbow(length(pie_number)))
+pie(pie_number, labels= labels2, main = "Delay Causes in January 2017")
 
 dev.off()
 ```
