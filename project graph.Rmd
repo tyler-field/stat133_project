@@ -1,0 +1,56 @@
+---
+title: "Untitled"
+author: ""
+date: ""
+output: 
+  html_document:
+    fig_height: 3
+    fig_width: 5
+---
+<!-- Don't edit in between this line and the one below -->
+```{r include=FALSE}
+# Don't delete this chunk if you are using the DataComputing package
+library(DataComputing)
+library(XML)
+library(tidyr)
+```
+*Source file* 
+```{r, results='asis', echo=FALSE}
+includeSourceDocuments()
+```
+<!-- Don't edit the material above this line -->
+
+```{r}
+table <- read.csv("9359078_T_ONTIME.csv") 
+```
+
+```{r}
+table %>% 
+  ggplot(aes(x= DEP_DELAY)) + geom_density()
+```
+
+
+```{r}
+table %>%  
+  for (i in 1:length(DAYS_OF_WEEK)) {
+  repeat{
+  if (DAY_OF_WEEK[i] == 7 & DAY_OF_WEEK[i] == 6) {
+    DAY_OF_WEEK[i] <- "weekend"
+  } else {
+    DAY_OF_WEEK[i] <- "wday"
+  }
+}
+}
+```
+
+
+
+```{r fig.height=20, fig.width=10}
+plot1<-table %>% ggplot(aes(x=CRS_DEP_TIME, y=DEP_DELAY)) + geom_point(alpha = 0.5, color = "blue") + geom_smooth(size = 1, alpha = 0.5) + facet_wrap(~ DAY_OF_WEEK, nrow = 7) 
+
+plot1
+``` 
+
+
+
+
