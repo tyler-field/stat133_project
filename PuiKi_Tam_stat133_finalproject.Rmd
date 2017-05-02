@@ -60,30 +60,32 @@ names(df)
 ```
 
 ```{r}
+#getting data from the csv
 table1arrive <- select(df, FL_DATE, ORIGIN, ORIGIN_AIRPORT_ID, ARR_DELAY, CARRIER_DELAY, WEATHER_DELAY, NAS_DELAY, SECURITY_DELAY, LATE_AIRCRAFT_DELAY)
-
+#keeping the data which has arrival delay from table1
 table2arrive <- table1arrive %>% filter(ARR_DELAY>0)
-
+#adding a column named Total_Delay
 table3arrive <- table2arrive %>% mutate(Total_Delay= CARRIER_DELAY + WEATHER_DELAY + NAS_DELAY + SECURITY_DELAY + LATE_AIRCRAFT_DELAY)
-
+#filter out unreasonable data
 table4arrive <- table3arrive %>% filter(ARR_DELAY== Total_Delay)
 
-
+#counting the number of delays caused by each of the reasons
 countArriveCarrierD <- length(which(table4arrive$CARRIER_DELAY > 0))
 countArriveWeatherD <- length(which(table4arrive$WEATHER_DELAY > 0))
 countArriveNasD <- length(which(table4arrive$NAS_DELAY > 0))
 countArriveSecurityD <- length(which(table4arrive$SECURITY_DELAY > 0))
 countArriveAircraftD <- length(which(table4arrive$LATE_AIRCRAFT_DELAY > 0))
 
-
+#generating a table which contains the delay causes and the delay numbers caused by each of them
 bar_numbers <- c(countArriveCarrierD, countArriveWeatherD, countArriveNasD, countArriveSecurityD, countArriveAircraftD)
 bar_causes <- c("Carrier", "Weather", "Nas", "Security", "Late Aircraft")
 ArriveBarData <- data.frame(Arrive.Delay.Causes= bar_causes, Number= bar_numbers)
 
+#Reorder the table from high to low using their delay numbers
 ArriveBarData = ArriveBarData[with(ArriveBarData, order(-bar_numbers)), ]
-
 ArriveBarData
 
+#generate a barplot
 png(file= "ArriveDelayBarplot.jpg")
 
 ArriveDelayBarplot<- ggplot(data=ArriveBarData, aes(x=reorder(ArriveBarData$Arrive.Delay.Causes, -ArriveBarData$Number), y= Number, fill=Arrive.Delay.Causes)) +
@@ -101,15 +103,15 @@ dev.off()
 
 
 ```{r}
-
+#getting data from the csv
 table1arrive <- select(df, FL_DATE, ORIGIN, ORIGIN_AIRPORT_ID, ARR_DELAY, CARRIER_DELAY, WEATHER_DELAY, NAS_DELAY, SECURITY_DELAY, LATE_AIRCRAFT_DELAY)
-
+#keeping the data which has arrival delay from table1
 table2arrive <- table1arrive %>% filter(ARR_DELAY>0)
-
+#adding a column named Total_Delay
 table3arrive <- table2arrive %>% mutate(Total_Delay= CARRIER_DELAY + WEATHER_DELAY + NAS_DELAY + SECURITY_DELAY + LATE_AIRCRAFT_DELAY)
-
+#filter out unreasonable data
 table4arrive <- table3arrive %>% filter(ARR_DELAY== Total_Delay)
-
+#adding colmuns which calculates the percentage of delay caused by each causes over the total arrival delay time of the flights 
 table5arrive <- table4arrive %>% mutate(CarrierDelayPercent= 100*CARRIER_DELAY/ARR_DELAY)
 table5arrive <- table5arrive %>% mutate(WeatherDelayPercent= 100*WEATHER_DELAY/ARR_DELAY)
 table5arrive <- table5arrive %>% mutate(NasDelayPercent= 100*NAS_DELAY/ARR_DELAY) 
@@ -118,11 +120,13 @@ table5arrive <- table5arrive %>% mutate(LateAircraftDelayPercent= 100*LATE_AIRCR
 
 table5arrive
 
+#average the delay percentage of each causes
 arriveCarrierDelay <- mean(table5arrive$CarrierDelayPercent)
 arriveWeatherDelay <- mean(table5arrive$WeatherDelayPercent)
 arriveNasDelay <- mean(table5arrive$NasDelayPercent)
 arriveSecurityDelay <- mean(table5arrive$SecurityDelayPercent)
 arriveLateAircraftDelay <- mean(table5arrive$LateAircraftDelayPercent)
+
 
 pie_numberarrive <- c(arriveCarrierDelay, arriveWeatherDelay, arriveNasDelay, arriveSecurityDelay, arriveLateAircraftDelay)
 pie_numberarrive
@@ -131,11 +135,13 @@ labels <- c("Carrier Delay", "Weather Delay", "NAS Delay", "Security Delay", "La
 pie_numberarrive <- round(pie_numberarrive, 1)
 pie_numberarrive
 
+#setting the labels
 labels2arrive <- paste(labels, pie_numberarrive)
 labels2arrive <- paste(labels2arrive, "%", sep="")
-
+#setting the colors
 colors <- c("yellow", "cyan", "green", "red", "orange")
 
+#generate a piechart
 png(file= "ArrDelayPie.jpg")
 
 pie(pie_numberarrive, labels= labels2arrive, main = "Arrival Delay Causes in January 2017", col = colors)
@@ -159,15 +165,16 @@ FlightsFeq <- count(table1, 'ORIGIN')
 FlightsFeq <- FlightsFeq[with(FlightsFeq, order(-freq)), ]
 FlightsFeq
 
-#Choosing the top 25 busiet airports
+#Choosing the top 25 busiest airports only
 Busy25 <- top_n(FlightsFeq, 25, freq)
-#Renaming the column 
+#Renaming the column freq
 colnames(Busy25)[colnames(Busy25) == 'freq'] <- 'TotalFlightFreq'
+#Comment: the airports sorted out here matches the 25 Busiest Airport in USA from the website http://usatravel.about.com/od/Plan-Your-Trip/tp/Busiest-Airports-In-The-USA.htm
 
 
 DelayAirports <- left_join(table2, Busy25, by="ORIGIN")
 DelayAirports25 <- DelayAirports %>% filter(TotalFlightFreq>= 0)
-#this would be the detailed table of all delayed flights from the top 25 busiest airports
+#creating detailed table of all delayed flights from the top 25 busiest airports
 DelayAirports25
 
 #Counting how many delayed flights each airports had
@@ -176,15 +183,18 @@ colnames(Delay25)[colnames(Delay25) == 'freq'] <- 'TotalDelayFreq'
 #Producing a table with the counts of delays of the top 25 busiest airports
 Delay25
 
+#joining the tables together
 Busy25 <- left_join(Busy25, Delay25, by="ORIGIN")
 #generate a delay percentage
 Busy25 <- mutate(Busy25, DelayPercentage= 100*TotalDelayFreq/TotalFlightFreq)
 Busy25
 
+#creating a table which tells the state of the airports
 AirportState <- select(df, ORIGIN, ORIGIN_STATE_NM)
 AirportState <- AirportState %>% distinct(ORIGIN, .keep_all = TRUE)
 AirportState
 
+#joining the tables together
 Busy25 <- left_join(Busy25, AirportState, by="ORIGIN")
 Busy25
 
@@ -198,7 +208,7 @@ West <- c("Arizona", "Colorado", "Idaho", "Montana", "Nevada", "New Mexico", "Ut
 Busy25Region <- mutate(Busy25, Region = ifelse(Busy25$ORIGIN_STATE_NM %in% Northeast, "Northeast", ifelse(Busy25$ORIGIN_STATE_NM %in% Midwest, "Midwest", ifelse(Busy25$ORIGIN_STATE_NM %in% South, "South", ifelse(Busy25$ORIGIN_STATE_NM %in% West, "West", "Other")))))
 Busy25Region
 
-
+#generate a scattherplot 
 png(file= "Busy25Delay.jpg")
 
 ggplot(Busy25Region, aes(x = ORIGIN, y = DelayPercentage, color=Region)) +
@@ -212,7 +222,7 @@ ggplot(Busy25Region, aes(x = ORIGIN, y = DelayPercentage, color=Region)) +
 dev.off()
 
 
-
+#generate the same scatterplot in decending order
 png(file= "Busy25Delay2.jpg")
 
 ggplot(Busy25Region, aes(x=reorder(Busy25Region$ORIGIN, -Busy25Region$DelayPercentage), y = DelayPercentage, color=Region)) +
