@@ -145,8 +145,10 @@ dev.off()
 
 
 ```{r}
+#getting data from csv
 table1 <- select(df, FL_DATE, ORIGIN, DEP_DELAY, CARRIER_DELAY, WEATHER_DELAY, NAS_DELAY, SECURITY_DELAY, LATE_AIRCRAFT_DELAY)
 
+#getting data of flights with departure delay only
 table2 <- table1 %>% filter(DEP_DELAY>0)
 
 
@@ -162,14 +164,16 @@ Busy25 <- top_n(FlightsFeq, 25, freq)
 #Renaming the column 
 colnames(Busy25)[colnames(Busy25) == 'freq'] <- 'TotalFlightFreq'
 
+
 DelayAirports <- left_join(table2, Busy25, by="ORIGIN")
 DelayAirports25 <- DelayAirports %>% filter(TotalFlightFreq>= 0)
 #this would be the detailed table of all delayed flights from the top 25 busiest airports
 DelayAirports25
 
+#Counting how many delayed flights each airports had
 Delay25 <- count(DelayAirports25, 'ORIGIN')
 colnames(Delay25)[colnames(Delay25) == 'freq'] <- 'TotalDelayFreq'
-#Producing a table with the counts of delays of the top 50 busiest airports
+#Producing a table with the counts of delays of the top 25 busiest airports
 Delay25
 
 Busy25 <- left_join(Busy25, Delay25, by="ORIGIN")
@@ -194,13 +198,28 @@ West <- c("Arizona", "Colorado", "Idaho", "Montana", "Nevada", "New Mexico", "Ut
 Busy25Region <- mutate(Busy25, Region = ifelse(Busy25$ORIGIN_STATE_NM %in% Northeast, "Northeast", ifelse(Busy25$ORIGIN_STATE_NM %in% Midwest, "Midwest", ifelse(Busy25$ORIGIN_STATE_NM %in% South, "South", ifelse(Busy25$ORIGIN_STATE_NM %in% West, "West", "Other")))))
 Busy25Region
 
+
 png(file= "Busy25Delay.jpg")
 
 ggplot(Busy25Region, aes(x = ORIGIN, y = DelayPercentage, color=Region)) +
   geom_point() +
   theme(axis.text.x = element_text(angle = 65, vjust = 0.5, hjust=0.2, size = 8.3)) +
-  labs(title = "Departure Delay of flights from the 25 Busiet US Airports in January 2017", x = "Origin Airports", y = "% of Delayed flights/Total flights took off") +
-  theme(plot.title = element_text(size = 12.5, color = "gray4"),  
+  labs(title = "Departure Delay of flights from the 25 Busiest US Airports in January 2017", x = "Origin Airports", y = "% of Delayed flights/Total flights took off") +
+  theme(plot.title = element_text(size = 13.5, color = "gray4"),  
+       axis.title.x = element_text(size = 10, color = "slateblue3"),  
+        axis.title.y = element_text(size = 10, color = "violetred4"))
+
+dev.off()
+
+
+
+png(file= "Busy25Delay2.jpg")
+
+ggplot(Busy25Region, aes(x=reorder(Busy25Region$ORIGIN, -Busy25Region$DelayPercentage), y = DelayPercentage, color=Region)) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 65, vjust = 0.5, hjust=0.2, size = 8.3)) +
+  labs(title = "Departure Delay of flights from the 25 Busiest US Airports in January 2017", x = "Origin Airports", y = "% of Delayed flights/Total flights took off") +
+  theme(plot.title = element_text(size = 13.5, color = "gray4"),  
        axis.title.x = element_text(size = 10, color = "slateblue3"),  
         axis.title.y = element_text(size = 10, color = "violetred4"))
 
