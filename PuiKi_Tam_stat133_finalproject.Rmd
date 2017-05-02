@@ -149,10 +149,6 @@ table1 <- select(df, FL_DATE, ORIGIN, DEP_DELAY, CARRIER_DELAY, WEATHER_DELAY, N
 
 table2 <- table1 %>% filter(DEP_DELAY>0)
 
-table3 <- table2 %>% mutate(Total_Delay= CARRIER_DELAY + WEATHER_DELAY + NAS_DELAY + SECURITY_DELAY + LATE_AIRCRAFT_DELAY)
-
-table4 <- table3 %>% filter(DEP_DELAY>= Total_Delay)
-
 
 #Counting the flight freq of each airports
 FlightsFeq <- count(table1, 'ORIGIN') 
@@ -161,14 +157,14 @@ FlightsFeq <- count(table1, 'ORIGIN')
 FlightsFeq <- FlightsFeq[with(FlightsFeq, order(-freq)), ]
 FlightsFeq
 
-#Choosing the top 50 busiet airports
+#Choosing the top 25 busiet airports
 Busy25 <- top_n(FlightsFeq, 25, freq)
 #Renaming the column 
 colnames(Busy25)[colnames(Busy25) == 'freq'] <- 'TotalFlightFreq'
 
 DelayAirports <- left_join(table2, Busy25, by="ORIGIN")
 DelayAirports25 <- DelayAirports %>% filter(TotalFlightFreq>= 0)
-#this would be the detailed table of all delayed flights from the top 50 busiest airports
+#this would be the detailed table of all delayed flights from the top 25 busiest airports
 DelayAirports25
 
 Delay25 <- count(DelayAirports25, 'ORIGIN')
@@ -194,23 +190,19 @@ Midwest <- c("Illinois", "Indiana", "Michigan", "Ohio", "Wisconsin", "Iowa", "Ka
 South <- c("South Atlantic", "Florida", "Georgia", "Maryland", "North Carolina", "South Carolina", "Virginia", "District of Columbia", "West Virginia", "Texas", "Tennessee", "Louisiana", "Kentucky")
 West <- c("Arizona", "Colorado", "Idaho", "Montana", "Nevada", "New Mexico", "Utah", "Wyoming", "Alaska", "California", "Hawaii", "Oregon", "Washington")
 
-#adding a region column to busy50
+#adding a region column to busy25
 Busy25Region <- mutate(Busy25, Region = ifelse(Busy25$ORIGIN_STATE_NM %in% Northeast, "Northeast", ifelse(Busy25$ORIGIN_STATE_NM %in% Midwest, "Midwest", ifelse(Busy25$ORIGIN_STATE_NM %in% South, "South", ifelse(Busy25$ORIGIN_STATE_NM %in% West, "West", "Other")))))
 Busy25Region
 
 png(file= "Busy25Delay.jpg")
 
-#ggplot(Busy50Region, aes(x = ORIGIN, y = DelayPercentage)) +
-  #geom_point() +
-  #facet_grid(. ~ Region) +
-  #theme(axis.text.x = element_text(angle = 65, vjust = 0.5, hjust=1, size = 3)) +
-  #ggtitle("Delay Percentage of the Top 50 Busiet US Airports in January 2017")
-
-ggplot(Busy25Region, aes(x = DelayPercentage, y = ORIGIN)) +
+ggplot(Busy25Region, aes(x = ORIGIN, y = DelayPercentage, color=Region)) +
   geom_point() +
-  facet_grid(Region ~ .) +
-  theme(axis.text.y = element_text(size = 5)) +
-  ggtitle("Delay Percentage of the Top 25 Busiet US Airports in January 2017")
+  theme(axis.text.x = element_text(angle = 65, vjust = 0.5, hjust=0.2, size = 8.3)) +
+  labs(title = "Departure Delay of flights from the 25 Busiet US Airports in January 2017", x = "Origin Airports", y = "% of Delayed flights/Total flights took off") +
+  theme(plot.title = element_text(size = 12.5, color = "gray4"),  
+       axis.title.x = element_text(size = 10, color = "slateblue3"),  
+        axis.title.y = element_text(size = 10, color = "violetred4"))
 
 dev.off()
 
