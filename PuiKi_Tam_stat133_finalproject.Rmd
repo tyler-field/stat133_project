@@ -157,36 +157,60 @@ table1 <- select(df, FL_DATE, ORIGIN, DEP_DELAY, CARRIER_DELAY, WEATHER_DELAY, N
 #getting data of flights with departure delay only
 table2 <- table1 %>% filter(DEP_DELAY>0)
 
-
 #Counting the flight freq of each airports
-FlightsFeq <- count(table1, 'ORIGIN') 
-
+FlightsFeq <- count(table1, 'ORIGIN')
 #Sorting the freq of data from high to low 
 FlightsFeq <- FlightsFeq[with(FlightsFeq, order(-freq)), ]
+#Renaming the column freq
+colnames(FlightsFeq)[colnames(FlightsFeq) == 'freq'] <- 'TotalFlightFreqOfAirports'
 FlightsFeq
 
+#adding the flights freqeuency data into table1
+table1withFlightFreqOfAirports <- left_join(table1, FlightsFeq, by="ORIGIN")
+table1withFlightFreqOfAirports
+
+#Counting the delay freq of each airports
+DelayFreqOfAirports <- count(table2, 'ORIGIN')
+colnames(DelayFreqOfAirports)[colnames(DelayFreqOfAirports) == 'freq'] <- 'TotalDelayFreqOfAirports'
+DelayFreqOfAirports
+
+#adding the flights freqeuency data into table1withFlightFreqOfAirports
+table1Detailed <- left_join(table1withFlightFreqOfAirports, DelayFreqOfAirports, by="ORIGIN")
+table1Detailed <- mutate(table1Detailed, DelayPercentageofAirports= 100*TotalDelayFreqOfAirports/TotalFlightFreqOfAirports)
+table1Detailed
+
+
+
+#creating a table with all airports with its delay percentage
+AllAirportsDelayPercentage <- select(table1Detailed, ORIGIN, DelayPercentageofAirports)
+AllAirportsDelayPercentage <- AllAirportsDelayPercentage %>% distinct(ORIGIN, .keep_all = TRUE)
+AllAirportsDelayPercentage
+
+#Preparing the average delay percetage of all airports for the scatterplot
+hline<-mean(AllAirportsDelayPercentage$DelayPercentageofAirports, na.rm = TRUE)
+hline
+txt <- data.frame(x = "LAS", y = hline, lab = "label")
+
 #Choosing the top 25 busiest airports only
-Busy25 <- top_n(FlightsFeq, 25, freq)
-#Renaming the column freq
-colnames(Busy25)[colnames(Busy25) == 'freq'] <- 'TotalFlightFreq'
+Busy25 <- top_n(FlightsFeq, 25, TotalFlightFreqOfAirports)
 #Comment: the airports sorted out here matches the 25 Busiest Airport in USA from the website http://usatravel.about.com/od/Plan-Your-Trip/tp/Busiest-Airports-In-The-USA.htm
 
 
-DelayAirports <- left_join(table2, Busy25, by="ORIGIN")
-DelayAirports25 <- DelayAirports %>% filter(TotalFlightFreq>= 0)
+DelayAirports25 <- left_join(table2, Busy25, by="ORIGIN")
+DelayAirports25 <- DelayAirports25 %>% filter(TotalFlightFreqOfAirports>= 0)
 #creating detailed table of all delayed flights from the top 25 busiest airports
 DelayAirports25
 
 #Counting how many delayed flights each airports had
 Delay25 <- count(DelayAirports25, 'ORIGIN')
-colnames(Delay25)[colnames(Delay25) == 'freq'] <- 'TotalDelayFreq'
+colnames(Delay25)[colnames(Delay25) == 'freq'] <- 'TotalDelayFreqOfAirports'
 #Producing a table with the counts of delays of the top 25 busiest airports
 Delay25
 
 #joining the tables together
 Busy25 <- left_join(Busy25, Delay25, by="ORIGIN")
 #generate a delay percentage
-Busy25 <- mutate(Busy25, DelayPercentage= 100*TotalDelayFreq/TotalFlightFreq)
+Busy25 <- mutate(Busy25, DelayPercentage= 100*TotalDelayFreqOfAirports/TotalFlightFreqOfAirports)
 Busy25
 
 #creating a table which tells the state of the airports
@@ -194,7 +218,7 @@ AirportState <- select(df, ORIGIN, ORIGIN_STATE_NM)
 AirportState <- AirportState %>% distinct(ORIGIN, .keep_all = TRUE)
 AirportState
 
-#joining the tables together
+#adding the Region data column into Busy 25 table
 Busy25 <- left_join(Busy25, AirportState, by="ORIGIN")
 Busy25
 
@@ -227,6 +251,8 @@ png(file= "Busy25Delay2.jpg")
 
 ggplot(Busy25Region, aes(x=reorder(Busy25Region$ORIGIN, -Busy25Region$DelayPercentage), y = DelayPercentage, color=Region)) +
   geom_point() +
+  geom_hline(aes(yintercept= round(hline, 1)), col="seagreen4", linetype="dashed", label="Average Delay % of all airports") +
+   geom_text(aes(0, hline, label = "Average Delay % of all airports"),hjust = 0, vjust = -1, size=3, col="seagreen4")+
   theme(axis.text.x = element_text(angle = 65, vjust = 0.5, hjust=0.2, size = 8.3)) +
   labs(title = "Departure Delay of flights from the 25 Busiest US Airports in January 2017", x = "Origin Airports", y = "% of Delayed flights/Total flights took off") +
   theme(plot.title = element_text(size = 13.5, color = "gray4"),  
@@ -235,6 +261,22 @@ ggplot(Busy25Region, aes(x=reorder(Busy25Region$ORIGIN, -Busy25Region$DelayPerce
 
 dev.off()
 
+#generate the same scatterplot in order of the busiest airport to the least busiest one from left to right
+png(file= "Busy25Delay3.jpg")
+
+ggplot(Busy25Region, aes(x=reorder(Busy25Region$ORIGIN, -Busy25Region$TotalFlightFreq), y = DelayPercentage, color=Region)) +
+  geom_point() +
+  geom_hline(aes(yintercept= round(hline, 1)), col="seagreen4", linetype="dashed", label="Average Delay % of all airports") +
+   geom_text(aes(0, hline, label = "Average Delay % of all airports"),hjust = 0, vjust = -1, size=3, col="seagreen4")+
+  theme(axis.text.x = element_text(angle = 65, vjust = 0.5, hjust=0.2, size = 8.3)) +
+  labs(title = "Departure Delay of flights from the 25 Busiest US Airports in January 2017", x = "Origin Airports (left: the most busiest; Right: the least busiest)", y = "% of Delayed flights/Total flights took off") +
+  theme(plot.title = element_text(size = 13.5, color = "gray4"),  
+       axis.title.x = element_text(size = 10, color = "slateblue3"),  
+        axis.title.y = element_text(size = 10, color = "violetred4"))
+
+dev.off()
+
+#+ geom_vline(aes(yintercept=mean(AllAirportsDelayPercentage$DelayPercentageofAirports)), col="olivedrab1") +
 ```
 
 
