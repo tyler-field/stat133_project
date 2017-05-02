@@ -1,0 +1,101 @@
+---
+title: "Ally Stat133 Final Project"
+author: "Tianying(Ally) Guan"
+date: "2017/5/1"
+output: html_document
+---
+
+```{r}
+library(DataComputing)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+```
+
+```{r}
+setwd("/Users/Ally/Desktop")
+getwd()
+AirplaneData <- read.csv("AirplaneData.csv")
+names(AirplaneData)
+```
+
+```{r}
+table1carrier <- select(AirplaneData, CARRIER,CARRIER_DELAY,ARR_DELAY,LATE_AIRCRAFT_DELAY,WEATHER_DELAY)
+table2carrier <- table1carrier %>% filter(ARR_DELAY>0)
+table3carrier <- table2carrier %>% mutate(Total_Delay=CARRIER_DELAY+ARR_DELAY+LATE_AIRCRAFT_DELAY+WEATHER_DELAY)
+table3carrier
+```
+
+```{r}
+Carriers<- mutate(table3carrier, Carriers = ifelse(table3carrier$CARRIER=="AA","AA", ifelse(table3carrier$CARRIER=="AS","AS", ifelse(table3carrier$CARRIER=="DL","DL", ifelse(table3carrier$CARRIER=="UA","UA", ifelse(table3carrier$CARRIER=="WN","WN","NA"))))))
+Carriers
+```
+
+```{r}
+New_Carriers <- Carriers[!(Carriers$Carriers=="NA"),]
+New_Carriers
+```
+
+```{r}
+Delay_Cause <- mutate(table3carrier, Delay_Cause = ifelse(table3carrier$CARRIER_DELAY>0,"CARRIER_DELAY", ifelse(table3carrier$LATE_AIRCRAFT_DELAY>0,"LATE_AIRCRAFT_DELAY","")))
+```
+
+```{r}
+New_CarriersTest <-New_Carriers %>%
+  mutate(CARRIER_Delay_Percentage=100*New_Carriers$CARRIER_DELAY/ARR_DELAY) 
+New_CarriersTest <- mutate(New_CarriersTest, LateAircraft_Delay_Percentage= 100*New_Carriers$LATE_AIRCRAFT_DELAY/ARR_DELAY)
+New_CarriersTest <- mutate(New_CarriersTest, Delay_Cause = ifelse(New_CarriersTest$CARRIER_Delay_Percentage>0,"Carrier Delay", ifelse(New_CarriersTest$LateAircraft_Delay_Percentage>0,"Late Aircraft Delay", "")))
+
+New_CarriersTest
+```
+
+```{r}
+New_CarriersTest2 <- New_CarriersTest[!(New_CarriersTest$Delay_Cause==""),]
+New_CarriersTest2
+```
+
+```{r}
+#New_CarriersTest3 <- filter(New_CarriersTest2, Delay_Cause== "Late Aircraft Delay"  "Carrier Delay")  
+#New_CarriersTest3
+```
+
+```{r}
+png(file= "Delay_Cause.jpg")
+
+New_CarriersTest2 %>%
+  ggplot(aes(x=LateAircraft_Delay_Percentage)) +
+  geom_density(aes(fill=Delay_Cause),col=NA,alpha=0.3,position=position_stack()) +
+  facet_wrap( ~ Carriers) +
+  scale_y_continuous(name="Density",limits = c(0, 0.05))
+
+dev.off()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
