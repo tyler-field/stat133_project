@@ -1,0 +1,129 @@
+---
+title: "Ally_Stat 133 FP Best/Worst Carriers"
+author: "Tianying(Ally) Guan"
+date: "2017/5/2"
+output: html_document
+---
+
+```{r}
+library(DataComputing)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+```
+
+```{r}
+setwd("/Users/Ally/Desktop")
+getwd()
+AirplaneData <- read.csv("AirplaneData.csv")
+names(AirplaneData)
+```
+
+```{r}
+table1carrier <- select(AirplaneData,DAY_OF_WEEK,CARRIER,FL_NUM,CARRIER_DELAY,ARR_DELAY,WEATHER_DELAY,NAS_DELAY,SECURITY_DELAY,LATE_AIRCRAFT_DELAY)
+table2carrier <- table1carrier %>% filter(ARR_DELAY>0)
+table3carrier <- table2carrier %>% mutate(Total_Delay=CARRIER_DELAY+ARR_DELAY+WEATHER_DELAY+NAS_DELAY+SECURITY_DELAY+LATE_AIRCRAFT_DELAY)
+table3carrier %>% select(CARRIER,Total_Delay) %>% group_by(CARRIER)%>% summarise(count = n()) -> save
+save
+```
+
+```{r}
+#counting the number of total delays for each airplane company
+countTFAA <- length(which(table1carrier$CARRIER=="AA"))
+countTFAS <- length(which(table1carrier$CARRIER=="AS"))
+countTFB6 <- length(which(table1carrier$CARRIER=="B6"))
+countTFDL <- length(which(table1carrier$CARRIER=="DL"))
+countTFEV <- length(which(table1carrier$CARRIER=="EV"))
+countTFF9 <- length(which(table1carrier$CARRIER=="F9"))
+countTFHA <- length(which(table1carrier$CARRIER=="HA"))
+countTFNK <- length(which(table1carrier$CARRIER=="NK"))
+countTFOO <- length(which(table1carrier$CARRIER=="OO"))
+countTFUA <- length(which(table1carrier$CARRIER=="UA"))
+countTFVX <- length(which(table1carrier$CARRIER=="VX"))
+countTFWN <- length(which(table1carrier$CARRIER=="WN"))
+```
+
+```{r}
+#counting the number of total delay flights for each airplane company
+countTDFAA <- length(which(table3carrier$CARRIER_DELAY=="AA"))
+countTDFAS <- length(which(table3carrier$CARRIER_DELAY=="AS"))
+countTDFB6 <- length(which(table3carrier$CARRIER_DELAY=="B6"))
+countTDFDL <- length(which(table3carrier$CARRIER_DELAY=="DL"))
+countTDFEV <- length(which(table3carrier$CARRIER_DELAY=="EV"))
+countTDFF9 <- length(which(table3carrier$CARRIER_DELAY=="F9"))
+countTDFHA <- length(which(table3carrier$CARRIER_DELAY=="HA"))
+countTDFNK <- length(which(table3carrier$CARRIER_DELAY=="NK"))
+countTDFOO <- length(which(table3carrier$CARRIER_DELAY=="OO"))
+countTDFUA <- length(which(table3carrier$CARRIER_DELAY=="UA"))
+countTDFVX <- length(which(table3carrier$CARRIER_DELAY=="VX"))
+countTDFWN <- length(which(table3carrier$CARRIER_DELAY=="WN"))
+```
+
+```{r}
+TFCount_Carrier <- c(countTFAA, countTFAS, countTFB6, countTFDL, countTFEV, countTFF9, countTFHA, countTFNK, countTFOO, countTFUA, countTFVX, countTFWN)
+TDFCount_Carrrier <- c(countTDFAA, countTDFAS, countTDFB6, countTDFDL, countTDFEV, countTDFF9, countTDFHA, countTDFNK, countTDFOO, countTDFUA, countTDFVX, countTDFWN)
+CARRIER_Name <- c("AA", "AS", "B6", "DL", "EV", "F9", "HA", "NK", "OO", "UA", "VX", "WN")
+```
+
+```{r}
+df <- data.frame(Total_Flight=TFCount_Carrier,Carriers_Name=CARRIER_Name)
+```
+
+```{r}
+names(df)[2]<- "CARRIER"
+Total.Delay.Percentage <- save %>%
+  left_join(df) %>% mutate(Total_Delay_Percentage=100*count/Total_Flight) 
+# %>% sample_n(size=100)
+Total.Delay.Percentage <- mutate(Total.Delay.Percentage, CarriersFlightFrequency = ifelse(Total.Delay.Percentage$Total_Flight>65000,">65000", ifelse(Total.Delay.Percentage$Total_Flight>45000, ">45000", ifelse(Total.Delay.Percentage$Total_Flight>25000, ">25000", ">=25000"))))
+Total.Delay.Percentage
+```
+
+```{r}
+png(file= "Best vs. Worst Carrier.jpg")
+
+Total.Delay.Percentage <- ggplot(Total.Delay.Percentage, aes(x=CARRIER, y=Total_Delay_Percentage, color=CarriersFlightFrequency)) +
+  geom_point() +
+  labs(title = "Best vs. Worst Carrier",x="Carriers", y="Total_Delay_Percentage") +
+  theme(plot.title = element_text(size = 30, color = "pink"),  
+        axis.title.x = element_text(size = 20, color = "pink"),  
+        axis.title.y = element_text(size = 20, color = "pink"))
+Total.Delay.Percentage
+
+dev.off()
+
+  #group_by(CARRIER,Total_Delay_Percentage) %>%
+```
+
+```{r}
+#Histogram <- ggplot(T2, aes(area, fill = sample_size)) +
+  #geom_histogram(binwidth = 0.05) + facet_grid(. ~sample_size) + geom_vline(aes(xintercept=as.numeric(pi)), col="purple") +
+  #labs(title = "Best vs. Worst Carrier", x = "Carriers", y = "Count") +
+  #theme(plot.title = element_text(size = 30, color = "pink"),  
+        #axis.title.x = element_text(size = 20, color = "pink"),  
+        #axis.title.y = element_text(size = 20, color = "pink")) 
+#Histogram
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
