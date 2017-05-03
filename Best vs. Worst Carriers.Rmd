@@ -75,24 +75,25 @@ names(df)[2]<- "CARRIER"
 Total.Delay.Percentage <- save %>%
   left_join(df) %>% mutate(Total_Delay_Percentage=100*count/Total_Flight) 
 # %>% sample_n(size=100)
-Total.Delay.Percentage <- mutate(Total.Delay.Percentage, CarriersFlightFrequency = ifelse(Total.Delay.Percentage$Total_Flight>65000,">65000", ifelse(Total.Delay.Percentage$Total_Flight>45000, ">45000", ifelse(Total.Delay.Percentage$Total_Flight>25000, ">25000", ">=25000"))))
+Total.Delay.Percentage <- mutate(Total.Delay.Percentage, CarriersFlightFrequency = ifelse(Total.Delay.Percentage$Total_Flight>65000,">65000", ifelse(Total.Delay.Percentage$Total_Flight>45000, ">45000", ifelse(Total.Delay.Percentage$Total_Flight>25000, ">25000", "<=25000"))))
 Total.Delay.Percentage
 ```
 
 ```{r}
 png(file= "Best vs. Worst Carrier.jpg")
 
-Total.Delay.Percentage <- ggplot(Total.Delay.Percentage, aes(x=CARRIER, y=Total_Delay_Percentage, color=CarriersFlightFrequency)) +
+Total.Delay.Percentage <- ggplot(Total.Delay.Percentage, aes(x=reorder(CARRIER,-Total_Delay_Percentage), y=Total_Delay_Percentage, color=CarriersFlightFrequency)) +
   geom_point() +
-  labs(title = "Best vs. Worst Carrier",x="Carriers", y="Total_Delay_Percentage") +
-  theme(plot.title = element_text(size = 30, color = "pink"),  
-        axis.title.x = element_text(size = 20, color = "pink"),  
-        axis.title.y = element_text(size = 20, color = "pink"))
+  labs(title = "Best vs. Worst Carrier",x="Carriers", y="Total Delay Percentage") +
+  theme(plot.title = element_text(size = 30, color = "deeppink3"),  
+        axis.title.x = element_text(size = 15, color = "purple"),  
+        axis.title.y = element_text(size = 15, color = "navy"))
 Total.Delay.Percentage
 
 dev.off()
 
   #group_by(CARRIER,Total_Delay_Percentage) %>%
+ #x=reorder(Busy25Region$ORIGIN, -Busy25Region$DelayPercentage)
 ```
 
 ```{r}
